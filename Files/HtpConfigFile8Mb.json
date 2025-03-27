@@ -1,0 +1,6 @@
+{
+    "backend_extensions": {
+        "shared_library_path": "/mnt/etc/images/dsp/libQnnHtpNetRunExtensions.so",
+        "config_file_path": "/NVMe/bhanu/PerfSettings8Mb.conf"
+    }
+}
