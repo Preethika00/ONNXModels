@@ -1,21 +1,31 @@
 #!/bin/bash
 
-# Number of configurations in quant_configs.json
-num_configs=$(jq length quant_configs.json)
+# Path to main config and sweep config
+MAIN_CONFIG="config.json"
+SWEEP_CONFIG="sweep_configs.json"
 
-for ((i=0; i<num_configs; i++))
+# Parse the sweep configs using jq
+len=$(jq length $SWEEP_CONFIG)
+
+for ((i=0; i<$len; i++))
 do
-    # Extract values for the current iteration
-    quant_scheme=$(jq -r ".[$i].quant_scheme" quant_configs.json)
-    output_bw=$(jq -r ".[$i].output_bw" quant_configs.json)
-    param_bw=$(jq -r ".[$i].param_bw" quant_configs.json)
+  # Extract values
+  quant_scheme=$(jq -r ".[$i].quant_scheme" $SWEEP_CONFIG)
+  output_bw=$(jq -r ".[$i].output_bw" $SWEEP_CONFIG)
+  param_bw=$(jq -r ".[$i].param_bw" $SWEEP_CONFIG)
 
-    # Update config.json with the extracted values
-    jq ".quant_scheme = \"$quant_scheme\" | .output_bw = $output_bw | .param_bw = $param_bw" config.json > config_temp.json
-    mv config_temp.json config.json
+  echo "Running with quant_scheme=$quant_scheme, output_bw=$output_bw, param_bw=$param_bw"
 
-    # Run your command here; replace with actual command
-    echo "Running with quant_scheme=$quant_scheme, output_bw=$output_bw, param_bw=$param_bw"
-    # Example: python your_script.py --config config.json
+  # Update config.json dynamically
+  jq \
+    --arg qs "$quant_scheme" \
+    --argjson ob "$output_bw" \
+    --argjson pb "$param_bw" \
+    '.quant_scheme = $qs | .output_bw = $ob | .param_bw = $pb' \
+    "$MAIN_CONFIG" > tmp_config.json && mv tmp_config.json "$MAIN_CONFIG"
 
+  # Run your Python code (update the path to your main script if needed)
+  python main.py --config "$MAIN_CONFIG"
+
+  echo "---------------------------------------------"
 done
