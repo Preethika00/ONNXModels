@@ -1,0 +1,32 @@
+[
+    {
+        "prepare_model": "True",
+        "quant_scheme": "tf",
+        "output_bw": 8,
+        "param_bw": 8
+    },
+    {
+        "prepare_model": "True",
+        "quant_scheme": "tf_enhanced",
+        "output_bw": 8,
+        "param_bw": 8
+    },
+    {
+        "prepare_model": "True",
+        "quant_scheme": "tf_enhanced",
+        "output_bw": 16,
+        "param_bw": 16
+    },
+    {
+        "prepare_model": "False",
+        "quant_scheme": "tf_enhanced",
+        "output_bw": 8,
+        "param_bw": 8
+    },
+    {
+        "prepare_model": "False",
+        "quant_scheme": "tf_enhanced",
+        "output_bw": 16,
+        "param_bw": 16
+    }
+]

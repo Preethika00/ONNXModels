@@ -1,31 +1,43 @@
 #!/bin/bash
 
-# Path to main config and sweep config
-MAIN_CONFIG="config.json"
-SWEEP_CONFIG="sweep_configs.json"
+CONFIG_FILE=/media/ava/Data_CI/workspace/preethika/Final_owl/ai-multiverse/models/OWL-ViT/configs/config.json
+PARAMS_FILE=/media/ava/Data_CI/workspace/preethika/Final_owl/ai-multiverse/models/OWL-ViT/automation/quant_config.json
+LOG_DIR=/media/ava/Data_CI/workspace/preethika/Final_owl/ai-multiverse/models/OWL-ViT/automation/experiment_logs
 
-# Parse the sweep configs using jq
-len=$(jq length $SWEEP_CONFIG)
+# Create log directory if not exists
+mkdir -p $LOG_DIR
 
-for ((i=0; i<$len; i++))
+# Read number of entries in params file
+num_entries=$(python3 -c "import json; print(len(json.load(open('$PARAMS_FILE'))))")
+
+for ((i=0; i<$num_entries; i++))
 do
-  # Extract values
-  quant_scheme=$(jq -r ".[$i].quant_scheme" $SWEEP_CONFIG)
-  output_bw=$(jq -r ".[$i].output_bw" $SWEEP_CONFIG)
-  param_bw=$(jq -r ".[$i].param_bw" $SWEEP_CONFIG)
+    # Extract parameters using python
+    quant_scheme=$(python3 -c "import json; print(json.load(open('$PARAMS_FILE'))[$i]['quant_scheme'])")
+    output_bw=$(python3 -c "import json; print(json.load(open('$PARAMS_FILE'))[$i]['output_bw'])")
+    param_bw=$(python3 -c "import json; print(json.load(open('$PARAMS_FILE'))[$i]['param_bw'])")
 
-  echo "Running with quant_scheme=$quant_scheme, output_bw=$output_bw, param_bw=$param_bw"
+    echo "Running iteration $i with quant_scheme=$quant_scheme, output_bw=$output_bw, param_bw=$param_bw"
 
-  # Update config.json dynamically
-  jq \
-    --arg qs "$quant_scheme" \
-    --argjson ob "$output_bw" \
-    --argjson pb "$param_bw" \
-    '.quant_scheme = $qs | .output_bw = $ob | .param_bw = $pb' \
-    "$MAIN_CONFIG" > tmp_config.json && mv tmp_config.json "$MAIN_CONFIG"
+    # Update config.json with new values
+    python3 - <<EOF
+import json
 
-  # Run your Python code (update the path to your main script if needed)
-  python main.py --config "$MAIN_CONFIG"
+with open("$CONFIG_FILE", "r") as f:
+    config = json.load(f)
 
-  echo "---------------------------------------------"
+config["quant_scheme"] = "$quant_scheme"
+config["output_bw"] = int($output_bw)
+config["param_bw"] = int($param_bw)
+
+with open("$CONFIG_FILE", "w") as f:
+    json.dump(config, f, indent=4)
+EOF
+
+    # Run your command here, for example:
+    python3 main.py --quant --cle --config $CONFIG_FILE > $LOG_DIR/log_$i.txt 2>&1
+
+    # For demonstration, just echo to log file
+    # echo "Simulated run with quant_scheme=$quant_scheme, output_bw=$output_bw, param_bw=$param_bw" > $LOG_DIR/log_$i.txt
+
 done
