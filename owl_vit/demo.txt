@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# Number of configurations in quant_configs.json
+num_configs=$(jq length quant_configs.json)
+
+for ((i=0; i<num_configs; i++))
+do
+    # Extract values for the current iteration
+    quant_scheme=$(jq -r ".[$i].quant_scheme" quant_configs.json)
+    output_bw=$(jq -r ".[$i].output_bw" quant_configs.json)
+    param_bw=$(jq -r ".[$i].param_bw" quant_configs.json)
+
+    # Update config.json with the extracted values
+    jq ".quant_scheme = \"$quant_scheme\" | .output_bw = $output_bw | .param_bw = $param_bw" config.json > config_temp.json
+    mv config_temp.json config.json
+
+    # Run your command here; replace with actual command
+    echo "Running with quant_scheme=$quant_scheme, output_bw=$output_bw, param_bw=$param_bw"
+    # Example: python your_script.py --config config.json
+
+done
